@@ -1235,7 +1235,6 @@ function updateAuthUI() {
         const profileName = document.getElementById('profileName');
         const profileEmail = document.getElementById('profileEmail');
         const profilePhone = document.getElementById('profilePhone');
-        const profileAddress = document.getElementById('profileAddress');
         const profileBio = document.getElementById('profileBio');
         
         if (profileName) profileName.value = currentUser.full_name || '';
@@ -1269,35 +1268,6 @@ function updateAuthUI() {
             }
         }
         
-        if (profileAddress) {
-            const addressVal = currentUser.address ? String(currentUser.address).trim() : "";
-            profileAddress.value = (addressVal.toLowerCase() === "null") ? "" : addressVal;
-            
-            console.log(`[UI Update] Address Value: "${addressVal}"`);
-
-            // Lock address if it's already set (Trading Style Security)
-            if (addressVal !== "" && addressVal.toLowerCase() !== "null") {
-                profileAddress.disabled = true;
-                const addressContainer = profileAddress.closest('.input-with-icon');
-                if (addressContainer) {
-                    addressContainer.classList.add('disabled');
-                    if (!addressContainer.querySelector('.lock-badge')) {
-                        const lock = document.createElement('span');
-                        lock.className = 'lock-badge';
-                        lock.innerHTML = `<i class="fas fa-lock"></i> ${currentLang === 'ar' ? 'مؤمن' : 'Secured'}`;
-                        addressContainer.appendChild(lock);
-                    }
-                }
-            } else {
-                profileAddress.disabled = false;
-                const addressContainer = profileAddress.closest('.input-with-icon');
-                if (addressContainer) {
-                    addressContainer.classList.remove('disabled');
-                    const lock = addressContainer.querySelector('.lock-badge');
-                    if (lock) lock.remove();
-                }
-            }
-        }
         if (profileBio) profileBio.value = currentUser.bio || '';
 
     } else {
@@ -1926,14 +1896,14 @@ const articles = {
     guide_1: {
         title_en: "Choosing the Right Oil Filter",
         title_ar: "كيفية اختيار فلتر الزيت المناسب",
-        image: "./assets/Mechanic inspecting oil filters in daylight.png",
+        image: "./assets/guide1.png",
         content_en: "Your engine's health depends on clean oil. An oil filter removes contaminants from your car engine's oil that can accumulate over time. Choosing the right one means looking at the filter media quality, the bypass valve, and the build material. Always check your car's manual for the specific micron rating required.",
         content_ar: "تعتمد صحة محركك على نظافة الزيت. يقوم فلتر الزيت بإزالة الملوثات من زيت محرك سيارتك التي يمكن أن تتراكم بمرور الوقت. اختيار الفلتر الصحيح يعني النظر في جودة مادة الفلترة، وصمام الأمان، ومواد التصنيع. تحقق دائماً من دليل سيارتك لمعرفة تصنيف الميكرون المحدد المطلوب."
     },
     guide_2: {
         title_en: "AGM vs Lead-Acid Batteries",
         title_ar: "بطاريات AGM مقابل الرصاص",
-        image: "./assets/Tightening connections on a car battery.png",
+        image: "./assets/guide2.png",
         content_en: "AGM (Absorbent Glass Mat) batteries are more expensive but offer higher performance, faster charging, and better vibration resistance compared to standard Lead-Acid batteries. If your car has a Start-Stop system, an AGM battery is almost always required to handle the high electrical demand.",
         content_ar: "تعد بطاريات AGM أكثر تكلفة ولكنها توفر أداءً أعلى وشحناً أسرع ومقاومة أفضل للاهتزاز مقارنة ببطاريات الرصاص القياسية. إذا كانت سيارتك تحتوي على نظام Start-Stop، فإن بطارية AGM مطلوبة دائماً تقريباً للتعامل مع الطلب الكهربائي العالي."
     },
@@ -2734,14 +2704,13 @@ async function saveProfile(newImg = null) {
     
     const nameEl = document.getElementById('profileName');
     const phoneEl = document.getElementById('profilePhone');
-    const addressEl = document.getElementById('profileAddress');
     const bioEl = document.getElementById('profileBio');
     
     const updatedData = {
         userId: currentUser.id,
         full_name: nameEl ? nameEl.value.trim() : currentUser.full_name,
         phone: phoneEl ? phoneEl.value.trim() : currentUser.phone,
-        address: addressEl ? addressEl.value.trim() : currentUser.address,
+        address: currentUser.address, // Keep existing address from DB
         bio: bioEl ? bioEl.value.trim() : (currentUser.bio || ""),
         profile_image: newImg || (el.userAvatar ? el.userAvatar.src : currentUser.profile_image)
     };
@@ -2757,15 +2726,13 @@ async function saveProfile(newImg = null) {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Update failed');
 
-        // Update state with verified data from server (keeps registration address safe)
+        // Update state with verified data from server
         currentUser = { ...data.user };
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
         
         // Re-lock fields if they were updated
         const profilePhone = document.getElementById('profilePhone');
-        const profileAddress = document.getElementById('profileAddress');
         if (profilePhone && profilePhone.value.trim() !== "") profilePhone.disabled = true;
-        if (profileAddress && profileAddress.value.trim() !== "") profileAddress.disabled = true;
 
         updateAuthUI();
         if (el.userListings) renderDashboard();
