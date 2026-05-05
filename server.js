@@ -86,7 +86,10 @@ const db = mysql.createPool({
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
-    multipleStatements: true // Enable for migrations/setup if needed
+    multipleStatements: true,
+    ssl: {
+        rejectUnauthorized: false // Required for some cloud MySQL providers
+    }
 });
 
 // Initialize Database Tables and Indexes
@@ -891,6 +894,18 @@ app.use((err, req, res, next) => {
         error: 'Internal Server Error',
         message: err.message
     });
+});
+
+// Test Database Connection Route
+app.get('/api/test-db', async (req, res) => {
+    try {
+        const connection = await db.promise().getConnection();
+        await connection.query('SELECT 1');
+        connection.release();
+        res.json({ message: 'Database is connected!', status: 'success' });
+    } catch (err) {
+        res.status(500).json({ error: 'Database connection failed', details: err.message });
+    }
 });
 
 const server = // Export the app for Vercel Serverless Functions
